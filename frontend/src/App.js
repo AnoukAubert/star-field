@@ -1,63 +1,92 @@
-import React, { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Register from "./Register";
-import Login from "./Login";
-import TaskDashboard from "./TaskDashboard";
-import ProtectedRoute from "./ProtectedRoute";
+import { useEffect, useState } from "react";
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
-  const navigate = useNavigate();
+  const [stars, setStars] = useState([]);
+  const [shootings, setShootings] = useState([]);
 
   useEffect(() => {
-    const token = localStorage.getItem('jwt');
-    if (token) setLoggedIn(true);
-  }, []);
-  
-  const handleLogin = (token) => {
-    localStorage.setItem('jwt', token);
-    setLoggedIn(true);
-    navigate('/tasks');
-  };
+    const numStars = 100;
+    const generatedStars = [];
 
-  const handleLogout = () => {
-    localStorage.removeItem("jwt");
-    setLoggedIn(false);
-    navigate("/signin");
-  };
+    for (let i = 0; i < numStars; i++) {
+      const size = Math.random() * 2 + 1;
+      const left = Math.random() * 100;
+      const delay = Math.random() * 20;
+      const duration = 10 + Math.random() * 10;
+      const travel = 100 + Math.random() * 100;
+
+      generatedStars.push({ id: i, size, left, delay, duration, travel });
+    }
+
+    setStars(generatedStars);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const id = Date.now();
+      const top = Math.random() * 100;
+      const left = Math.random() * 100;
+
+      const newShooting = { id, top, left };
+      setShootings((prev) => [...prev, newShooting]);
+
+      setTimeout(() => {
+        setShootings((prev) => prev.filter((s) => s.id !== id));
+      }, 1000);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <>
-      <header className="bg-violet-900 text-white py-4 px-6 flex justify-between">
-        <h1 className="text-xl font-semibold">ToDo App</h1>
-        {loggedIn && (
-          <button onClick={handleLogout} className="hover:underline">
-            Cerrar sesión
-          </button>
-        )}
-      </header>
+    <div className="relative z-0 w-full h-screen overflow-hidden bg-gradient-to-b from-black via-indigo-950 to-violet-950 text-white">
+      <div
+        className="nebula"
+        style={{
+          top: "10%",
+          left: "20%",
+        }}
+      ></div>
 
-      <Routes>
-        <Route path="/signup" element={<Register onLogin={handleLogin} />} />
-        <Route path="/signin" element={<Login onLogin={handleLogin} />} />
-        <Route
-          path="/tasks"
-          element={
-            <ProtectedRoute loggedIn={loggedIn}>
-              <TaskDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="*"
-          element={<Navigate to={loggedIn ? "/tasks" : "/signin"} />}
-        />
-      </Routes>
+      <div
+        className="nebula"
+        style={{
+          bottom: "10%",
+          right: "15%",
+        }}
+      ></div>
 
-      <ToastContainer position="top-right" autoClose={3000} />
-    </>
+      {stars.map((star) => (
+        <div
+          key={star.id}
+          className="star"
+          style={{
+            width: `${star.size}px`,
+            height: `${star.size}px`,
+            left: `${star.left}%`,
+            top: `-${star.size * 2}px`,
+            animationDelay: `${star.delay}s`,
+            animationDuration: `${star.duration}s`,
+            animationName: "star-move, twinkle",
+            "--travel": `${star.travel}vh`,
+          }}
+        />
+      ))}
+
+      {shootings.map((s) => (
+        <div
+          key={s.id}
+          className="shooting-star"
+          style={{ top: `${s.top}%`, left: `${s.left}%` }}
+        />
+      ))}
+
+      <div className="absolute inset-0 flex items-center justify-center z-10">
+        <h1 className="text-4xl font-bold bg-transparent glow-text">
+          ✨ Star Field ✨
+        </h1>
+      </div>
+    </div>
   );
 }
 
